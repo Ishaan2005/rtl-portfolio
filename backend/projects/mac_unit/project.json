@@ -1,0 +1,47 @@
+{
+  "id": "mac_unit",
+  "name": "MAC Unit in Verilog and OpenLane",
+  "subtitle": "Multiply-Accumulate (MAC) Unit — RTL to GDSII with OpenLane",
+  "category": "DSP & Physical Design (OpenLane)",
+  "description": "Design, verification, and end-to-end automated silicon implementation of a Multiply-Accumulate (MAC) Unit in Verilog HDL. Undergoes complete digital physical design from RTL synthesis to final GDSII layout generation using the open-source OpenLane EDA flow targeting the SkyWater 130nm PDK. Serves as computational backbone for DSP, matrix acceleration, and Deep Neural Network accelerators.",
+  "topModule": "apb_top",
+  "rtlDirectory": "rtl",
+  "testbenchDirectory": "tb",
+  "topTestbench": "apb_tb.v",
+  "simulator": "iverilog",
+  "standard": "verilog",
+  "timescale": "1ns / 1ps",
+  "supportsSimulation": true,
+  "supportsWaveform": true,
+  "supportsDiagram": true,
+  "supportsGDS": true,
+  "architectureDetails": [
+    "Computes Accumulator_new = (Operand_A * Operand_B) + Accumulator_previous natively in hardware.",
+    "Eliminates instruction overhead for vector inner products, FIR filtering, convolution, and matrix multiply operations.",
+    "Integrated Multiplier array, Carry-Propagate Accumulator adder, and output pipeline registers.",
+    "Automated RTL-to-GDSII physical implementation flow via OpenLane on SkyWater 130nm PDK.",
+    "Validated timing closure, DRC/LVS cleanliness, and zero setup/hold timing violations."
+  ],
+  "tags": ["Verilog", "OpenLane", "SkyWater 130nm", "MAC", "DSP", "GDSII"],
+  "stats": {
+    "lutCount": 215,
+    "ffCount": 96,
+    "bramCount": 0,
+    "clockDomains": ["clk (50 MHz)"],
+    "targetFmax": "320 MHz",
+    "estPower": "16.8 mW @ SkyWater 130nm",
+    "fsmStates": 3
+  },
+  "ports": [
+    { "name": "clk", "direction": "input", "width": 1, "domain": "clk", "description": "Clock signal" },
+    { "name": "reset", "direction": "input", "width": 1, "domain": "clk", "description": "Reset signal" },
+    { "name": "ptransfer_top", "direction": "input", "width": 1, "domain": "clk", "description": "Operation enable / strobe" },
+    { "name": "pwrite_top", "direction": "input", "width": 1, "domain": "clk", "description": "Accumulate / Multiply mode control" },
+    { "name": "paddr_top", "direction": "input", "width": 32, "domain": "clk", "description": "Register / operand address bus" },
+    { "name": "write_bus_top", "direction": "input", "width": 32, "domain": "clk", "description": "Input operand payload" },
+    { "name": "read_bus_top", "direction": "output", "width": 32, "domain": "clk", "description": "Accumulator product output bus" },
+    { "name": "penable_top", "direction": "output", "width": 1, "domain": "clk", "description": "Pipeline stage strobe" },
+    { "name": "psel1_top", "direction": "output", "width": 1, "domain": "clk", "description": "Operand A bank select" },
+    { "name": "psel2_top", "direction": "output", "width": 1, "domain": "clk", "description": "Operand B bank select" }
+  ]
+}

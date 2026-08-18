@@ -1,0 +1,47 @@
+{
+  "id": "amba_apb3",
+  "name": "AMBA APB3 Protocol Design and Verification",
+  "subtitle": "Complete APB3 Master-Slave Bus Architecture with Multi-Device Routing",
+  "category": "Bus Architecture & Interconnect",
+  "description": "Complete implementation and functional verification of the AMBA APB3 (Advanced Peripheral Bus) protocol in Verilog HDL. Incorporates an APB3 Master controller state machine, dual Memory-Mapped Slave devices, address decoding, non-blocking transfer phases (IDLE, SETUP, ACCESS), and an automated self-checking testbench suite.",
+  "topModule": "apb_top",
+  "rtlDirectory": "rtl",
+  "testbenchDirectory": "tb",
+  "topTestbench": "apb_tb.v",
+  "simulator": "iverilog",
+  "standard": "verilog",
+  "timescale": "1ns / 1ps",
+  "supportsSimulation": true,
+  "supportsWaveform": true,
+  "supportsDiagram": true,
+  "supportsGDS": false,
+  "architectureDetails": [
+    "Three-state FSM controller (IDLE, SETUP, ACCESS) executing compliant AMBA APB3 protocol transfers.",
+    "Integrated Address Decoder directing peripheral transactions across multiple Slave address ranges (Slave 1: 0x000-0x0FF, Slave 2: 0x100-0x200).",
+    "Synchronous 32-bit read/write data buses with PSEL, PENABLE, and PWRITE control handshaking.",
+    "Individual Slave registers capturing and retaining write payloads across clock cycles.",
+    "Verified against corner cases: back-to-back sequential bursts, alternating read/write transfers, and multi-slave arbitration."
+  ],
+  "tags": ["Verilog", "AMBA APB3", "SoC Bus", "FSM", "Verification"],
+  "stats": {
+    "lutCount": 168,
+    "ffCount": 74,
+    "bramCount": 0,
+    "clockDomains": ["clk (50 MHz)"],
+    "targetFmax": "400 MHz",
+    "estPower": "12.6 mW @ 28nm",
+    "fsmStates": 3
+  },
+  "ports": [
+    { "name": "clk", "direction": "input", "width": 1, "domain": "clk", "description": "APB system clock (50 MHz)" },
+    { "name": "reset", "direction": "input", "width": 1, "domain": "clk", "description": "Asynchronous active-high system reset" },
+    { "name": "ptransfer_top", "direction": "input", "width": 1, "domain": "clk", "description": "Initiate APB transfer command" },
+    { "name": "pwrite_top", "direction": "input", "width": 1, "domain": "clk", "description": "Direction control (1 = Write, 0 = Read)" },
+    { "name": "paddr_top", "direction": "input", "width": 32, "domain": "clk", "description": "32-bit APB peripheral address" },
+    { "name": "write_bus_top", "direction": "input", "width": 32, "domain": "clk", "description": "32-bit input data bus for write transactions" },
+    { "name": "read_bus_top", "direction": "output", "width": 32, "domain": "clk", "description": "32-bit multiplexed read data bus from active slave" },
+    { "name": "penable_top", "direction": "output", "width": 1, "domain": "clk", "description": "APB strobe indicating ACCESS phase" },
+    { "name": "psel1_top", "direction": "output", "width": 1, "domain": "clk", "description": "Slave 1 chip-select (Address range: 0x000-0x0FF)" },
+    { "name": "psel2_top", "direction": "output", "width": 1, "domain": "clk", "description": "Slave 2 chip-select (Address range: 0x100-0x200)" }
+  ]
+}

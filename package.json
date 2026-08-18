@@ -1,0 +1,11 @@
+{
+  "name": "rtl-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Interactive RTL & Digital ASIC Design Portfolio for Recruiters",
+  "scripts": {
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "build": "npm --prefix backend run build && npm --prefix frontend run build"
+  }
+}

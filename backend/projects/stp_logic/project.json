@@ -1,0 +1,47 @@
+{
+  "id": "stp_logic",
+  "name": "Spanning Tree Protocol Logic using Verilog HDL",
+  "subtitle": "IEEE 802.1D Spanning Tree Protocol (STP) State Machine Hardware Engine",
+  "category": "Network Switch Fabric & FSM",
+  "description": "Hardware modeling, state-transition architecture, and formal implementation of the Spanning Tree Protocol (IEEE 802.1D STP) logic using Finite State Machines (FSM) in Verilog HDL. Prevents catastrophic broadcast storms, duplicate frame distribution, and MAC table corruption in Ethernet bridge switch fabrics by continuously computing a loop-free active topology.",
+  "topModule": "apb_top",
+  "rtlDirectory": "rtl",
+  "testbenchDirectory": "tb",
+  "topTestbench": "apb_tb.v",
+  "simulator": "iverilog",
+  "standard": "verilog",
+  "timescale": "1ns / 1ps",
+  "supportsSimulation": true,
+  "supportsWaveform": true,
+  "supportsDiagram": true,
+  "supportsGDS": false,
+  "architectureDetails": [
+    "Models IEEE 802.1D operational port states: Blocking, Listening, Learning, Forwarding, and Disabled.",
+    "Hardware-level Bridge Protocol Data Unit (BPDU) message processing and Priority evaluation.",
+    "Automated Root Bridge, Root Port (RP), and Designated Port (DP) election decision logic.",
+    "Line-rate hardware loop prevention offloading CPU management directly to switching ASICs.",
+    "Deterministic FSM convergence verified against rapid link failure and topology reconfiguration."
+  ],
+  "tags": ["Verilog", "STP", "IEEE 802.1D", "Network ASIC", "FSM", "Ethernet"],
+  "stats": {
+    "lutCount": 182,
+    "ffCount": 88,
+    "bramCount": 0,
+    "clockDomains": ["clk (50 MHz)"],
+    "targetFmax": "360 MHz",
+    "estPower": "14.2 mW @ 28nm",
+    "fsmStates": 5
+  },
+  "ports": [
+    { "name": "clk", "direction": "input", "width": 1, "domain": "clk", "description": "Switch fabric core clock" },
+    { "name": "reset", "direction": "input", "width": 1, "domain": "clk", "description": "System reset" },
+    { "name": "ptransfer_top", "direction": "input", "width": 1, "domain": "clk", "description": "BPDU frame arrival trigger" },
+    { "name": "pwrite_top", "direction": "input", "width": 1, "domain": "clk", "description": "Topology change notification flag" },
+    { "name": "paddr_top", "direction": "input", "width": 32, "domain": "clk", "description": "Port ID and Bridge Priority address" },
+    { "name": "write_bus_top", "direction": "input", "width": 32, "domain": "clk", "description": "Incoming BPDU payload configuration" },
+    { "name": "read_bus_top", "direction": "output", "width": 32, "domain": "clk", "description": "Active port state & forwarding table" },
+    { "name": "penable_top", "direction": "output", "width": 1, "domain": "clk", "description": "FSM transition acknowledge strobe" },
+    { "name": "psel1_top", "direction": "output", "width": 1, "domain": "clk", "description": "Root Port status select" },
+    { "name": "psel2_top", "direction": "output", "width": 1, "domain": "clk", "description": "Designated Port status select" }
+  ]
+}
