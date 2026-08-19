@@ -7,7 +7,7 @@ import { getProjectManifest } from './projectService.js';
 
 const execFileAsync = promisify(execFile);
 
-const YOSYS_DIR = process.env.YOSYS_BIN_DIR || 'D:\\exe_isos\\oss-cad-suite\\bin';
+const YOSYS_DIR = process.env.YOSYS_BIN_DIR || '/usr/bin';
 const YOSYS_PATH = path.join(YOSYS_DIR, 'yosys.exe');
 const YOSYS_LIB_DIR = path.resolve(YOSYS_DIR, '..', 'lib');
 

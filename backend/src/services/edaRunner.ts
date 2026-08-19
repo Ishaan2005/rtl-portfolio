@@ -9,7 +9,7 @@ import { LogEntry, WaveformData } from '../types/index.js';
 
 const execFileAsync = promisify(execFile);
 
-const IVERILOG_BIN_DIR = process.env.IVERILOG_BIN_DIR || 'D:\\iverilog\\bin';
+const IVERILOG_BIN_DIR = process.env.IVERILOG_BIN_DIR || '/usr/bin';
 const IVERILOG_PATH = path.join(IVERILOG_BIN_DIR, 'iverilog.exe');
 const VVP_PATH = path.join(IVERILOG_BIN_DIR, 'vvp.exe');
 
