@@ -1,6 +1,7 @@
 import { RTLProject, SimulationResult, NetlistDiagramResult } from '../types/rtl';
 
-const API_BASE = '/api';
+const API_BASE =
+  import.meta.env.VITE_API_BASE || '/api';
 
 export async function fetchProjects(): Promise<RTLProject[]> {
   const res = await fetch(`${API_BASE}/projects`);
