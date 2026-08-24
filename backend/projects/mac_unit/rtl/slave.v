@@ -1,8 +1,8 @@
 `timescale 1ns / 1ps
 // ============================================================================
 // Module Name: slave_one & slave_two
-// Description: AMBA APB3 Slave Devices (Memory / Peripheral Interface)
-// Project: AMBA APB3 Protocol Design and Verification
+// Description: AMBA APB5 Slave Devices (Memory / Peripheral Interface)
+// Project: AMBA APB5 Protocol Design and Verification
 // Author: Ishaan Bhimajiyani
 // ============================================================================
 

@@ -1,8 +1,8 @@
 `timescale 1ns / 1ps
 // ============================================================================
 // Module Name: apb_top
-// Description: Complete Top-Level AMBA APB3 Interconnect with 1 Master & 2 Slaves
-// Project: AMBA APB3 Protocol Design and Verification
+// Description: Complete Top-Level AMBA APB5 Interconnect with 1 Master & 2 Slaves
+// Project: AMBA APB5 Protocol Design and Verification
 // Author: Ishaan Bhimajiyani
 // ============================================================================
 

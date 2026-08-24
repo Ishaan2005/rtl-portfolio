@@ -1,9 +1,9 @@
 {
   "id": "amba_apb3",
-  "name": "AMBA APB3 Protocol Design and Verification",
-  "subtitle": "Complete APB3 Master-Slave Bus Architecture with Multi-Device Routing",
+  "name": "AMBA APB5 Protocol Design and Verification",
+  "subtitle": "Complete APB5 Master-Slave Bus Architecture with Multi-Device Routing",
   "category": "Bus Architecture & Interconnect",
-  "description": "Complete implementation and functional verification of the AMBA APB3 (Advanced Peripheral Bus) protocol in Verilog HDL. Incorporates an APB3 Master controller state machine, dual Memory-Mapped Slave devices, address decoding, non-blocking transfer phases (IDLE, SETUP, ACCESS), and an automated self-checking testbench suite.",
+  "description": "Complete implementation and functional verification of the AMBA APB5 (Advanced Peripheral Bus) protocol in Verilog HDL. Incorporates an APB5 Master controller state machine, dual Memory-Mapped Slave devices, address decoding, non-blocking transfer phases (IDLE, SETUP, ACCESS), and an automated self-checking testbench suite.",
   "topModule": "apb_top",
   "rtlDirectory": "rtl",
   "testbenchDirectory": "tb",
@@ -16,13 +16,13 @@
   "supportsDiagram": true,
   "supportsGDS": false,
   "architectureDetails": [
-    "Three-state FSM controller (IDLE, SETUP, ACCESS) executing compliant AMBA APB3 protocol transfers.",
+    "Three-state FSM controller (IDLE, SETUP, ACCESS) executing compliant AMBA APB5 protocol transfers.",
     "Integrated Address Decoder directing peripheral transactions across multiple Slave address ranges (Slave 1: 0x000-0x0FF, Slave 2: 0x100-0x200).",
     "Synchronous 32-bit read/write data buses with PSEL, PENABLE, and PWRITE control handshaking.",
     "Individual Slave registers capturing and retaining write payloads across clock cycles.",
     "Verified against corner cases: back-to-back sequential bursts, alternating read/write transfers, and multi-slave arbitration."
   ],
-  "tags": ["Verilog", "AMBA APB3", "SoC Bus", "FSM", "Verification"],
+  "tags": ["Verilog", "AMBA APB5", "SoC Bus", "FSM", "Verification"],
   "stats": {
     "lutCount": 168,
     "ffCount": 74,

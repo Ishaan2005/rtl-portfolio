@@ -39,7 +39,7 @@ export const RecruiterModal: React.FC<RecruiterModalProps> = ({ isOpen, onClose 
               <span>RTL & Microarchitecture</span>
             </div>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '11px', color: 'var(--text-primary)' }}>
-              <li>AMBA APB3 Bus Protocol & Interconnect</li>
+              <li>AMBA APB5 Bus Protocol & Interconnect</li>
               <li>MAC Unit & OpenLane SkyWater 130nm</li>
               <li>IEEE 802.1D STP Switch Fabric FSM</li>
               <li>High-Frequency Pipelining & STA</li>

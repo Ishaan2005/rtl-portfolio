@@ -1,8 +1,8 @@
 `timescale 1ns / 1ps
 // ============================================================================
 // Module Name: master
-// Description: AMBA APB3 Master Controller FSM & Address Decoder
-// Project: AMBA APB3 Protocol Design and Verification
+// Description: AMBA APB5 Master Controller FSM & Address Decoder
+// Project: AMBA APB5 Protocol Design and Verification
 // Author: Ishaan Bhimajiyani
 // ============================================================================
 

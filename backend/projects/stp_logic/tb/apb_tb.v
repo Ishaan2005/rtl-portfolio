@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 // ============================================================================
 // Module Name: apb_tb
-// Description: Functional Verification Testbench for AMBA APB3 Protocol Suite
+// Description: Functional Verification Testbench for AMBA APB5 Protocol Suite
 // Author: Ishaan Bhimajiyani
 // ============================================================================
 
@@ -40,7 +40,7 @@ module apb_tb;
         $dumpvars(0, apb_tb);
 
         $display("[TB] ================================================================");
-        $display("[TB] Starting AMBA APB3 Protocol Verification Suite");
+        $display("[TB] Starting AMBA APB5 Protocol Verification Suite");
         $display("[TB] ================================================================");
 
         clk = 0;
@@ -101,7 +101,7 @@ module apb_tb;
         @(posedge clk);
         ptransfer_top = 0;
         #40;
-        $display("[TB @ %0t ns] [TB SUCCESS] All APB3 read/write handshakes verified across dual slaves.", $time);
+        $display("[TB @ %0t ns] [TB SUCCESS] All APB5 read/write handshakes verified across dual slaves.", $time);
         $finish;
     end
 
