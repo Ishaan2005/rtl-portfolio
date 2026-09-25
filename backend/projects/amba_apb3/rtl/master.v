@@ -1,95 +1,63 @@
-`timescale 1ns / 1ps
-// ============================================================================
-// Module Name: master
-// Description: AMBA APB5 Master Controller FSM & Address Decoder
-// Project: AMBA APB5 Protocol Design and Verification
-// Author: Ishaan Bhimajiyani
-// ============================================================================
 
-module master (
-    input  wire        clk,
-    input  wire        reset,
-    input  wire        pwrite,
-    input  wire        ptransfer,
-    input  wire [31:0] paddr,
-    input  wire [31:0] read_data_bus,
-    input  wire [31:0] write_data_bus,
-    output reg         penable,
-    output reg         psel1,
-    output reg         psel2,
-    output reg  [31:0] pwdata,
-    output reg  [31:0] prdata
-);
+module master(pclk,presetn,pready,ptransfer,pwrite,psel,penable,paddr,pwdata,prdata,paddr_bus,pwdata_bus,pwrite_bus);
+input[31:0]pwdata_bus,paddr_bus;
+input pwrite_bus;
+input pclk,presetn,pready,ptransfer;
+output reg pwrite,psel,penable;
+output reg[31:0]paddr,pwdata;
+input[31:0]prdata;
+ //The first [31:0] describes the width of each register,
+ ////while the second [31:0] describes the number of elements (32)
 
-    parameter idle   = 2'b00;
-    parameter setup  = 2'b01;
-    parameter access = 2'b10;
+localparam idle = 2'b00;
+localparam setup = 2'b01;
+localparam access = 2'b10;
+reg[1:0]ps,ns;
 
-    reg pready;
-    reg [1:0] pstate, nstate;
+always@(posedge pclk or negedge presetn)begin //active low reset in apb, also async here
+        if(~presetn)
+                ps <= idle;
+        else
+                ps <= ns;
+end
 
-    always @(posedge clk or posedge reset) begin
-        if (reset) begin
-            pstate <= idle;
-        end else begin
-            pstate <= nstate;
-        end
-    end
+always@(*)begin
 
-    always @(*) begin
-        psel1   = 1'b0;
-        psel2   = 1'b0;
-        penable = 1'b0;
-        pready  = 1'b1;
-        prdata  = 32'b0;
-        pwdata  = 32'b0;
+pwrite = pwrite_bus;
+paddr = paddr_bus;
+pwdata = pwdata_bus;
 
-        case (pstate)
-            idle: begin
-                psel1   = 1'b0;
-                psel2   = 1'b0;
-                penable = 1'b0;
-                if (ptransfer)
-                    nstate = setup;
-                else
-                    nstate = idle;
-            end
+ns = ps;
+psel = 1'b0;
+penable = 1'b0;
 
-            setup: begin
-                penable = 1'b0;
-                nstate  = access;
-                if (paddr >= 32'h0000_0000 && paddr <= 32'h0000_00FF) begin
-                    // from 0 to 255 select 1st slave
-                    psel1 = 1'b1;
-                    psel2 = 1'b0;
-                end else if (paddr >= 32'h0000_0100 && paddr <= 32'h0000_0200) begin
-                    // 256 to 512 select 2nd slave
-                    psel2 = 1'b1;
-                    psel1 = 1'b0;
-                end else begin
-                    psel1 = 1'b0;
-                    psel2 = 1'b0;
+        case(ps)
+
+                idle:begin
+                        if(ptransfer)
+                                ns = setup;
+                        else
+                                ns = idle;
                 end
-            end
 
-            access: begin
+                setup:begin
+                                ns = access;
+                                psel = 1'b1;
+                end
+
+                access:begin
+                psel = 1'b1;
                 penable = 1'b1;
-                if (pready && ptransfer)
-                    nstate = setup;
-                else
-                    nstate = idle;
-
-                if (pwrite && pready) begin
-                    pwdata = write_data_bus;
-                end else begin
-                    prdata = read_data_bus;
+                        if(pready == 1 && ptransfer == 0)
+                                ns = idle;
+                        else if(pready == 1 && ptransfer == 1)
+                                ns = setup;
+                        else
+                                ns = access;
                 end
-            end
 
-            default: begin
-                nstate = idle;
-            end
+                default: ns = idle;
+
         endcase
-    end
-
+end
 endmodule

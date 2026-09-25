@@ -1,71 +1,30 @@
-`timescale 1ns / 1ps
-// ============================================================================
-// Module Name: slave_one & slave_two
-// Description: AMBA APB5 Slave Devices (Memory / Peripheral Interface)
-// Project: AMBA APB5 Protocol Design and Verification
-// Author: Ishaan Bhimajiyani
-// ============================================================================
-
-module slave_one (
-    input  wire        clk,
-    input  wire        reset,
-    input  wire        psel1,
-    input  wire        penable,
-    input  wire        pwrite,
-    input  wire [31:0] pwdata,
-    input  wire [31:0] paddr,
-    output reg         pready,
-    output reg  [31:0] prdata
-);
-
-    reg [31:0] data1;
-
-    always @(*) begin
-        pready = 1'b1;
-        prdata = 32'b0;
-        if (psel1 && penable && ~pwrite) begin
-            prdata = data1;
+module slave(input pclk,presetn,pwrite,psel,penable,output reg pready,input[31:0]pwdata,paddr,output reg[31:0]prdata);
+reg[31:0]dataf;
+//assign pready = 1'b1;
+reg[1:0]count = 0;
+always@(posedge pclk)begin 
+    if(psel == 1 && penable == 1)begin
+        if(count < 3)begin
+            count <= count + 1;
+            pready <= 1'b0;
+        end 
+        else begin 
+            pready <= 1'b1;
+            count <= 2'b0;
         end
     end
+end
 
-    always @(posedge clk or posedge reset) begin
-        if (reset) begin
-            data1 <= 32'b0;
-        end else if (psel1 && penable && pwrite) begin
-            data1 <= pwdata;
+always@(posedge pclk or negedge presetn)begin
+        if(~presetn)
+                dataf <= 0;
+        else begin
+                        if(pwrite == 1 && penable == 1 && psel == 1)
+                                dataf <= pwdata;
+                        else if(pwrite == 0 && penable == 1 && psel == 1)
+                                prdata <= dataf;
         end
-    end
-
+end
 endmodule
 
-module slave_two (
-    input  wire        clk,
-    input  wire        reset,
-    input  wire        psel2,
-    input  wire        penable,
-    input  wire        pwrite,
-    input  wire [31:0] pwdata,
-    input  wire [31:0] paddr,
-    output reg         pready,
-    output reg  [31:0] prdata
-);
 
-    reg [31:0] data2;
-
-    always @(*) begin
-        pready = 1'b1;
-        prdata = 32'b0;
-        if (psel2 && penable && ~pwrite) begin
-            prdata = data2;
-        end
-    end
-
-    always @(posedge clk or posedge reset) begin
-        if (reset) begin
-            data2 <= 32'b0;
-        end else if (psel2 && penable && pwrite) begin
-            data2 <= pwdata;
-        end
-    end
-
-endmodule
