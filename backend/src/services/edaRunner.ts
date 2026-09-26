@@ -10,8 +10,8 @@ import { LogEntry, WaveformData } from '../types/index.js';
 const execFileAsync = promisify(execFile);
 
 const IVERILOG_BIN_DIR = process.env.IVERILOG_BIN_DIR || '/usr/bin';
-const IVERILOG_PATH = path.join(IVERILOG_BIN_DIR, 'iverilog.exe');
-const VVP_PATH = path.join(IVERILOG_BIN_DIR, 'vvp.exe');
+const IVERILOG_PATH = path.join(IVERILOG_BIN_DIR, 'iverilog');
+const VVP_PATH = path.join(IVERILOG_BIN_DIR, 'vvp');
 
 const PROJECTS_DIR = path.resolve(process.cwd(), 'projects');
 const TEMP_RUNS_DIR = path.resolve(process.cwd(), 'temp_runs');

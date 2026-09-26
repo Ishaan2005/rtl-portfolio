@@ -1,5 +1,5 @@
 //vlsi inputs are the system-bus side
-module vlsi(
+module apb_top(
     input pclk,
     input presetn,
     input ptransfer,
