@@ -23,9 +23,7 @@ const originalNodeModulePaths = (Module as any)._nodeModulePaths;
 };
 
 const nodeRequire = typeof require !== 'undefined' ? require : (0, eval)('require');
-
-t NETLISTSVG_DIR =
-	  process.env.NETLISTSVG_DIR || path.resolve(process.cwd(), '../netlistsvg');
+const NETLISTSVG_DIR = process.env.NETLISTSVG_DIR || path.resolve(process.cwd(), '../netlistsvg');
 const NETLISTSVG_BUILT_PATH = path.join(NETLISTSVG_DIR, 'built', 'index.js');
 const DEFAULT_SKIN_PATH = path.join(NETLISTSVG_DIR, 'lib', 'default.svg');
 

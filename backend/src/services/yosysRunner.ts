@@ -6,7 +6,6 @@ import { promisify } from 'util';
 import { getProjectManifest } from './projectService.js';
 
 const execFileAsync = promisify(execFile);
-
 const YOSYS_DIR = process.env.YOSYS_BIN_DIR || '/usr/bin';
 const YOSYS_PATH = path.join(YOSYS_DIR, 'yosys');
 const YOSYS_LIB_DIR = path.resolve(YOSYS_DIR, '..', 'lib');
@@ -73,10 +72,15 @@ export async function runYosysSynthesis(projectId: string): Promise<YosysSynthes
   // 5. Construct Yosys Synthesis Command
   // Command: read_verilog -sv <files>; hierarchy -top <top>; proc; opt; write_json netlist.json
   const fileArgs = sourceFiles.join(' ');
-  const yosysScript = `read_verilog -sv ${fileArgs}; hierarchy -top ${manifest.topModule}; proc; opt; write_json "${netlistJsonPath}"`;
+
+
+  const yosysScript = `read_verilog -sv ${fileArgs}; hierarchy -top ${manifest.topModule}; proc; write_json "${netlistJsonPath}"`;
 
   // Build PATH with OSS CAD Suite libraries
-  const customPath = `${YOSYS_DIR};${YOSYS_LIB_DIR};${process.env.PATH || ''}`;
+const pathSeparator = process.platform === 'win32' ? ';' : ':';
+
+const customPath =
+	  `${YOSYS_DIR}${pathSeparator}${YOSYS_LIB_DIR}${pathSeparator}${process.env.PATH || ''}`;
 
   let stdout = '';
   let stderr = '';

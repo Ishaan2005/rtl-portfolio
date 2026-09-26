@@ -26,6 +26,8 @@ RUN node --version && \
 
 WORKDIR /app
 
+COPY netlistsvg/ ./netlistsvg/
+
 # Copy backend package files first for Docker cache
 COPY backend/package*.json ./backend/
 

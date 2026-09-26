@@ -1,14 +1,15 @@
+`timescale 1ns/1ps
 module Dut_tb;
 reg pclk,presetn,ptransfer,pwrite_bus;
 reg[31:0] paddr_bus,pwdata_bus;
-vlsi v1(.pclk(pclk),.presetn(presetn),.ptransfer(ptransfer),.pwrite_bus(pwrite_bus),.paddr_bus(paddr_bus),.pwdata_bus(pwdata_bus));
+apb_top v1(.pclk(pclk),.presetn(presetn),.ptransfer(ptransfer),.pwrite_bus(pwrite_bus),.paddr_bus(paddr_bus),.pwdata_bus(pwdata_bus));
 initial pclk = 0;
 
 always
         #5 pclk = ~pclk;
 
 initial begin
-    $dumpfile("vlsi.vcd");
+    $dumpfile("waveform.vcd");
     $dumpvars(0,Dut_tb);
     ptransfer  = 0;pwrite_bus = 0;paddr_bus  = 0;pwdata_bus = 0 ;
 
