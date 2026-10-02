@@ -367,12 +367,46 @@ body {
 }
 
 /* Ports Inspector in Sidebar */
+.ports-section-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.ports-section-content.expanded {
+  grid-template-rows: 1fr;
+}
+
+.ports-section-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
 .ports-inspector {
   padding: 8px 10px;
   overflow-y: auto;
+  overflow-x: hidden;
   max-height: 220px;
   scrollbar-width: thin;
   scrollbar-color: var(--border-mid) var(--bg-sidebar);
+}
+
+.ports-inspector::-webkit-scrollbar {
+  width: 5px;
+}
+
+.ports-inspector::-webkit-scrollbar-track {
+  background: var(--bg-sidebar);
+}
+
+.ports-inspector::-webkit-scrollbar-thumb {
+  background: var(--border-mid);
+  border-radius: 3px;
+}
+
+.ports-inspector::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
 
 .port-item {
@@ -1105,4 +1139,23 @@ body {
 
 .btn-icon {
   padding: 6px 10px;
+}
+
+@media (max-width: 768px) {
+  .app-body {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .app-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border-dim);
+  }
+  .main-content {
+    border-left: none;
+    min-height: 500px;
+  }
+  .ports-inspector {
+    max-height: 180px;
+  }
 }

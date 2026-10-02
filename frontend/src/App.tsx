@@ -8,12 +8,14 @@ import { SimulationTab } from './components/tabs/SimulationTab';
 import { WaveformViewer } from './components/tabs/WaveformViewer';
 import { DiagramViewer } from './components/tabs/DiagramViewer';
 import { RecruiterModal } from './components/modals/RecruiterModal';
-import { fetchProjects, runSimulation } from './services/api';
+import { fetchProjects, runSimulation, normalizeProjectForFrontend } from './services/api';
 import { fallbackProjects } from './services/fallbackData';
 import { RTLProject, RTLFile, SimulationStage } from './types/rtl';
 
 export const App: React.FC = () => {
-  const [projects, setProjects] = useState<RTLProject[]>(fallbackProjects);
+  const [projects, setProjects] = useState<RTLProject[]>(() =>
+    fallbackProjects.map(normalizeProjectForFrontend)
+  );
   const [activeProjectId, setActiveProjectId] = useState<string>('amba_apb3');
   const [activeFileId, setActiveFileId] = useState<string>('apb_top.v');
   const [activeTab, setActiveTab] = useState<TabType>('source');

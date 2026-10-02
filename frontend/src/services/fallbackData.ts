@@ -30,26 +30,8 @@ export const fallbackProjects: RTLProject[] = [
         "path": "rtl/apb_top.v",
         "type": "source",
         "language": "verilog",
-        "content": "`timescale 1ns / 1ps\n// ============================================================================\n// Module Name: apb_top\n// Description: Complete Top-Level AMBA APB5 Interconnect with 1 Master & 2 Slaves\n// Project: AMBA APB5 Protocol Design and Verification\n// Author: Ishaan Bhimajiyani\n// ============================================================================\n\nmodule apb_top (\n    input  wire        clk,\n    input  wire        reset,\n    input  wire        pwrite_top,\n    input  wire        ptransfer_top,\n    input  wire [31:0] paddr_top,\n    input  wire [31:0] write_bus_top,\n    output wire [31:0] read_bus_top,\n    output wire        penable_top,\n    output wire        psel1_top,\n    output wire        psel2_top\n);\n\n    wire psel1_master, psel2_master, penable_master;\n    wire [31:0] prdata1, prdata2;\n    wire pready_top = 1'b1;\n    wire [31:0] prdata_master, pwdata_master;\n\n    assign psel1_top   = psel1_master;\n    assign psel2_top   = psel2_master;\n    assign penable_top = penable_master;\n\n    assign read_bus_top = psel1_master ? prdata1 : psel2_master ? prdata2 : 32'b0;\n\n    master m1 (\n        .clk            (clk),\n        .reset          (reset),\n        .pwrite         (pwrite_top),\n        .ptransfer      (ptransfer_top),\n        .paddr          (paddr_top),\n        .read_data_bus  (read_bus_top),\n        .write_data_bus (write_bus_top),\n        .penable        (penable_master),\n        .psel1          (psel1_master),\n        .psel2          (psel2_master),\n        .pwdata         (pwdata_master),\n        .prdata         (prdata_master)\n    );\n\n    slave_one slo (\n        .clk     (clk),\n        .reset   (reset),\n        .psel1   (psel1_master),\n        .penable (penable_master),\n        .pwrite  (pwrite_top),\n        .pwdata  (pwdata_master),\n        .paddr   (paddr_top),\n        .pready  (pready_top),\n        .prdata  (prdata1)\n    );\n\n    slave_two slt (\n        .clk     (clk),\n        .reset   (reset),\n        .psel2   (psel2_master),\n        .penable (penable_master),\n        .pwrite  (pwrite_top),\n        .pwdata  (pwdata_master),\n        .paddr   (paddr_top),\n        .pready  (pready_top),\n        .prdata  (prdata2)\n    );\n\nendmodule\r\n",
+        "content": "module master(pclk,presetn,pready,ptransfer,pwrite,psel,penable,paddr,pwdata,prdata,paddr_bus,pwdata_bus,pwrite_bus);\ninput[31:0]pwdata_bus,paddr_bus;\ninput pwrite_bus;\ninput pclk,presetn,pready,ptransfer;\noutput reg pwrite,psel,penable;\noutput reg[31:0]paddr,pwdata;\ninput[31:0]prdata;\n //The first [31:0] describes the width of each register,\n ////while the second [31:0] describes the number of elements (32)\n\nlocalparam idle = 2'b00;\nlocalparam setup = 2'b01;\nlocalparam access = 2'b10;\nreg[1:0]ps,ns;\n\nalways@(posedge pclk or negedge presetn)begin //active low reset in apb, also async here\n        if(~presetn)\n                ps <= idle;\n        else\n                ps <= ns;\nend\n\nalways@(*)begin\n\npwrite = pwrite_bus;\npaddr = paddr_bus;\npwdata = pwdata_bus;\n\nns = ps;\npsel = 1'b0;\npenable = 1'b0;\n\n        case(ps)\n\n                idle:begin\n                        if(ptransfer)\n                                ns = setup;\n                        else\n                                ns = idle;\n                end\n\n                setup:begin\n                                ns = access;\n                                psel = 1'b1;\n                end\n\n                access:begin\n                psel = 1'b1;\n                penable = 1'b1;\n                        if(pready == 1 && ptransfer == 0)\n                                ns = idle;\n                        else if(pready == 1 && ptransfer == 1)\n                                ns = setup;\n                        else\n                                ns = access;\n                end\n\n                default: ns = idle;\n\n        endcase\nend\nendmodule\n\nmodule slave(input pclk,presetn,pwrite,psel,penable,output reg pready,input[31:0]pwdata,paddr,output reg[31:0]prdata);\nreg[31:0]dataf;\n//assign pready = 1'b1;\nreg[1:0]count = 0;\nalways@(posedge pclk)begin\n    if(psel == 1 && penable == 1)begin\n        if(count < 3)begin\n            count <= count + 1;\n            pready <= 1'b0;\n        end\n        else begin\n            pready <= 1'b1;\n            count <= 2'b0;\n        end\n    end\nend\n\nalways@(posedge pclk or negedge presetn)begin\n        if(~presetn)\n                dataf <= 0;\n        else begin\n                        if(pwrite == 1 && penable == 1 && psel == 1)\n                                dataf <= pwdata;\n                        else if(pwrite == 0 && penable == 1 && psel == 1)\n                                prdata <= dataf;\n        end\nend\nendmodule\n\n//vlsi inputs are the system-bus side\nmodule apb_top(\n    input pclk,\n    input presetn,\n    input ptransfer,\n    input pwrite_bus,\n    input [31:0] paddr_bus,\n    input [31:0] pwdata_bus\n            );\n\n wire psel,penable,pwrite,pready; //slave determined based on paddr so it is not declared as a upper bus signal\n wire [31:0] paddr,pwdata,prdata;\n\nmaster m1(.pclk(pclk),\n          .presetn(presetn),\n          .penable(penable),\n          .psel(psel),\n          .pready(pready),\n          .pwrite(pwrite),\n          .paddr(paddr),\n          .pwdata(pwdata),\n          .prdata(prdata),\n          .ptransfer(ptransfer),\n          .paddr_bus(paddr_bus),\n          .pwdata_bus(pwdata_bus),\n          .pwrite_bus(pwrite_bus)\n          );\n\nslave s1(.pclk(pclk),\n         .presetn(presetn),\n         .pwrite(pwrite),\n         .psel(psel),\n         .penable(penable),\n         .pready(pready),\n         .paddr(paddr),\n         .pwdata(pwdata),\n         .prdata(prdata)\n         );\n\nendmodule\n",
         "description": "Synthesizable module source (apb_top.v)"
-      },
-      {
-        "id": "master.v",
-        "name": "master.v",
-        "path": "rtl/master.v",
-        "type": "source",
-        "language": "verilog",
-        "content": "`timescale 1ns / 1ps\n// ============================================================================\n// Module Name: master\n// Description: AMBA APB5 Master Controller FSM & Address Decoder\n// Project: AMBA APB5 Protocol Design and Verification\n// Author: Ishaan Bhimajiyani\n// ============================================================================\n\nmodule master (\n    input  wire        clk,\n    input  wire        reset,\n    input  wire        pwrite,\n    input  wire        ptransfer,\n    input  wire [31:0] paddr,\n    input  wire [31:0] read_data_bus,\n    input  wire [31:0] write_data_bus,\n    output reg         penable,\n    output reg         psel1,\n    output reg         psel2,\n    output reg  [31:0] pwdata,\n    output reg  [31:0] prdata\n);\n\n    parameter idle   = 2'b00;\n    parameter setup  = 2'b01;\n    parameter access = 2'b10;\n\n    reg pready;\n    reg [1:0] pstate, nstate;\n\n    always @(posedge clk or posedge reset) begin\n        if (reset) begin\n            pstate <= idle;\n        end else begin\n            pstate <= nstate;\n        end\n    end\n\n    always @(*) begin\n        psel1   = 1'b0;\n        psel2   = 1'b0;\n        penable = 1'b0;\n        pready  = 1'b1;\n        prdata  = 32'b0;\n        pwdata  = 32'b0;\n\n        case (pstate)\n            idle: begin\n                psel1   = 1'b0;\n                psel2   = 1'b0;\n                penable = 1'b0;\n                if (ptransfer)\n                    nstate = setup;\n                else\n                    nstate = idle;\n            end\n\n            setup: begin\n                penable = 1'b0;\n                nstate  = access;\n                if (paddr >= 32'h0000_0000 && paddr <= 32'h0000_00FF) begin\n                    // from 0 to 255 select 1st slave\n                    psel1 = 1'b1;\n                    psel2 = 1'b0;\n                end else if (paddr >= 32'h0000_0100 && paddr <= 32'h0000_0200) begin\n                    // 256 to 512 select 2nd slave\n                    psel2 = 1'b1;\n                    psel1 = 1'b0;\n                end else begin\n                    psel1 = 1'b0;\n                    psel2 = 1'b0;\n                end\n            end\n\n            access: begin\n                penable = 1'b1;\n                if (pready && ptransfer)\n                    nstate = setup;\n                else\n                    nstate = idle;\n\n                if (pwrite && pready) begin\n                    pwdata = write_data_bus;\n                end else begin\n                    prdata = read_data_bus;\n                end\n            end\n\n            default: begin\n                nstate = idle;\n            end\n        endcase\n    end\n\nendmodule\r\n",
-        "description": "Synthesizable module source (master.v)"
-      },
-      {
-        "id": "slave.v",
-        "name": "slave.v",
-        "path": "rtl/slave.v",
-        "type": "source",
-        "language": "verilog",
-        "content": "`timescale 1ns / 1ps\n// ============================================================================\n// Module Name: slave_one & slave_two\n// Description: AMBA APB5 Slave Devices (Memory / Peripheral Interface)\n// Project: AMBA APB5 Protocol Design and Verification\n// Author: Ishaan Bhimajiyani\n// ============================================================================\n\nmodule slave_one (\n    input  wire        clk,\n    input  wire        reset,\n    input  wire        psel1,\n    input  wire        penable,\n    input  wire        pwrite,\n    input  wire [31:0] pwdata,\n    input  wire [31:0] paddr,\n    output reg         pready,\n    output reg  [31:0] prdata\n);\n\n    reg [31:0] data1;\n\n    always @(*) begin\n        pready = 1'b1;\n        prdata = 32'b0;\n        if (psel1 && penable && ~pwrite) begin\n            prdata = data1;\n        end\n    end\n\n    always @(posedge clk or posedge reset) begin\n        if (reset) begin\n            data1 <= 32'b0;\n        end else if (psel1 && penable && pwrite) begin\n            data1 <= pwdata;\n        end\n    end\n\nendmodule\n\nmodule slave_two (\n    input  wire        clk,\n    input  wire        reset,\n    input  wire        psel2,\n    input  wire        penable,\n    input  wire        pwrite,\n    input  wire [31:0] pwdata,\n    input  wire [31:0] paddr,\n    output reg         pready,\n    output reg  [31:0] prdata\n);\n\n    reg [31:0] data2;\n\n    always @(*) begin\n        pready = 1'b1;\n        prdata = 32'b0;\n        if (psel2 && penable && ~pwrite) begin\n            prdata = data2;\n        end\n    end\n\n    always @(posedge clk or posedge reset) begin\n        if (reset) begin\n            data2 <= 32'b0;\n        end else if (psel2 && penable && pwrite) begin\n            data2 <= pwdata;\n        end\n    end\n\nendmodule\r\n",
-        "description": "Synthesizable module source (slave.v)"
       },
       {
         "id": "apb_tb.v",
@@ -57,7 +39,7 @@ export const fallbackProjects: RTLProject[] = [
         "path": "tb/apb_tb.v",
         "type": "testbench",
         "language": "verilog",
-        "content": "`timescale 1ns / 1ps\n// ============================================================================\n// Module Name: apb_tb\n// Description: Functional Verification Testbench for AMBA APB5 Protocol Suite\n// Author: Ishaan Bhimajiyani\n// ============================================================================\n\nmodule apb_tb;\n\n    reg         clk;\n    reg         reset;\n    reg         pwrite_top;\n    reg         ptransfer_top;\n    reg  [31:0] paddr_top;\n    reg  [31:0] write_bus_top;\n    wire [31:0] read_bus_top;\n    wire        penable_top;\n    wire        psel1_top;\n    wire        psel2_top;\n\n    // Instantiate DUT (Top Interconnect)\n    apb_top dut (\n        .clk           (clk),\n        .reset         (reset),\n        .pwrite_top    (pwrite_top),\n        .ptransfer_top (ptransfer_top),\n        .paddr_top     (paddr_top),\n        .write_bus_top (write_bus_top),\n        .read_bus_top  (read_bus_top),\n        .penable_top   (penable_top),\n        .psel1_top     (psel1_top),\n        .psel2_top     (psel2_top)\n    );\n\n    // 50 MHz clock generation (20ns period)\n    always #10 clk = ~clk;\n\n    initial begin\n        $dumpfile(\"waveform.vcd\");\n        $dumpvars(0, apb_tb);\n\n        $display(\"[TB] ================================================================\");\n        $display(\"[TB] Starting AMBA APB5 Protocol Verification Suite\");\n        $display(\"[TB] ================================================================\");\n\n        clk = 0;\n        reset = 1;\n        ptransfer_top = 0;\n        pwrite_top = 0;\n        paddr_top = 32'h0000_0000;\n        write_bus_top = 32'h0000_0000;\n\n        #25 reset = 0;\n        $display(\"[TB @ %0t ns] Reset released. System initialized to IDLE.\", $time);\n\n        // Transaction 1: Write to Slave 1 (Addr 0x0000_0004)\n        @(posedge clk);\n        ptransfer_top = 1;\n        pwrite_top = 1;\n        paddr_top = 32'h0000_0004;\n        write_bus_top = 32'hDEADBEEF;\n        $display(\"[TB @ %0t ns] Initiating WRITE transfer to Slave 1 (Addr: 0x%08h, Data: 0x%08h)...\", $time, paddr_top, write_bus_top);\n\n        @(posedge clk);\n        $display(\"[TB @ %0t ns] SETUP Phase: psel1 asserted, penable=0\", $time);\n\n        @(posedge clk);\n        $display(\"[TB @ %0t ns] ACCESS Phase: penable asserted. Data latched in Slave 1.\", $time);\n\n        // Transaction 2: Write to Slave 2 (Addr 0x0000_0150)\n        @(posedge clk);\n        paddr_top = 32'h0000_0150;\n        write_bus_top = 32'hCAFEBABE;\n        $display(\"[TB @ %0t ns] Initiating WRITE transfer to Slave 2 (Addr: 0x%08h, Data: 0x%08h)...\", $time, paddr_top, write_bus_top);\n\n        @(posedge clk);\n        $display(\"[TB @ %0t ns] ACCESS Phase: psel2 asserted. Data latched in Slave 2.\", $time);\n\n        // Transaction 3: Read from Slave 1 (Addr 0x0000_0004)\n        @(posedge clk);\n        pwrite_top = 0;\n        paddr_top = 32'h0000_0004;\n        $display(\"[TB @ %0t ns] Initiating READ transfer from Slave 1 (Addr: 0x%08h)...\", $time, paddr_top);\n\n        @(posedge clk);\n        @(posedge clk);\n        #1;\n        $display(\"[TB @ %0t ns] READ Data received from Slave 1: 0x%08h [PASS]\", $time, read_bus_top);\n\n        // Transaction 4: Read from Slave 2 (Addr 0x0000_0150)\n        @(posedge clk);\n        paddr_top = 32'h0000_0150;\n        $display(\"[TB @ %0t ns] Initiating READ transfer from Slave 2 (Addr: 0x%08h)...\", $time, paddr_top);\n\n        @(posedge clk);\n        @(posedge clk);\n        #1;\n        $display(\"[TB @ %0t ns] READ Data received from Slave 2: 0x%08h [PASS]\", $time, read_bus_top);\n\n        // Return to IDLE\n        @(posedge clk);\n        ptransfer_top = 0;\n        #40;\n        $display(\"[TB @ %0t ns] [TB SUCCESS] All APB5 read/write handshakes verified across dual slaves.\", $time);\n        $finish;\n    end\n\nendmodule\r\n",
+        "content": "`timescale 1ns/1ps\nmodule Dut_tb;\nreg pclk,presetn,ptransfer,pwrite_bus;\nreg[31:0] paddr_bus,pwdata_bus;\napb_top v1(.pclk(pclk),.presetn(presetn),.ptransfer(ptransfer),.pwrite_bus(pwrite_bus),.paddr_bus(paddr_bus),.pwdata_bus(pwdata_bus));\ninitial pclk = 0;\n\nalways\n\t#5 pclk = ~pclk;\n\ninitial begin\n    $dumpfile(\"waveform.vcd\");\n    $dumpvars(0,Dut_tb);\n    ptransfer  = 0;pwrite_bus = 0;paddr_bus  = 0;pwdata_bus = 0 ;\n\n$display(\"+------+--------+-----------+--------+----------+------+---------+----------+----------+--------\");\n$display(\"| Time | Preset | Ptransfer | Pwrite |  Paddr   | Psel | Penable |  Pwdata  |  Prdata  | Pready |\");\n$display(\"+------+--------+-----------+--------+----------+------+---------+----------+----------+--------\");\n\n$monitor(\"| %4t | %6b | %9b | %6b | %8h | %4b | %7b | %8h | %8h |\",\n\t $time, presetn, ptransfer, v1.pwrite, v1.paddr,\n\t v1.psel, v1.penable, v1.pwdata, v1.prdata,v1.pready);\n\n@(posedge pclk)\n\n    presetn = 1'b0;\n\t#4 presetn = 1'b1; //as active-low reset;\n\t#12 paddr_bus = 32'h1111_1111;ptransfer = 1'b1;pwdata_bus = 32'h1234_5678;pwrite_bus = 1'b1;\n\t#24 ptransfer = 1'b0;\n    #40 ptransfer = 1'b1;pwrite_bus = 1'b0;paddr_bus = 32'h1111_1111;\n    #55 ptransfer = 1'b0;\n    #70 $finish;\nend\nendmodule\n",
         "description": "Verification testbench (apb_tb.v)"
       }
     ],
@@ -74,74 +56,46 @@ export const fallbackProjects: RTLProject[] = [
     },
     "ports": [
       {
-        "name": "clk",
+        "name": "pclk",
         "direction": "input",
         "width": 1,
         "domain": "clk",
-        "description": "APB system clock (50 MHz)"
+        "description": "APB system bus clock"
       },
       {
-        "name": "reset",
+        "name": "presetn",
         "direction": "input",
         "width": 1,
         "domain": "clk",
-        "description": "Asynchronous active-high system reset"
+        "description": "Active-low asynchronous system reset"
       },
       {
-        "name": "ptransfer_top",
+        "name": "ptransfer",
         "direction": "input",
         "width": 1,
         "domain": "clk",
         "description": "Initiate APB transfer command"
       },
       {
-        "name": "pwrite_top",
+        "name": "pwrite_bus",
         "direction": "input",
         "width": 1,
         "domain": "clk",
-        "description": "Direction control (1 = Write, 0 = Read)"
+        "description": "System bus write control (1 = Write, 0 = Read)"
       },
       {
-        "name": "paddr_top",
+        "name": "paddr_bus",
         "direction": "input",
         "width": 32,
         "domain": "clk",
-        "description": "32-bit APB peripheral address"
+        "description": "32-bit system bus address [31:0]"
       },
       {
-        "name": "write_bus_top",
+        "name": "pwdata_bus",
         "direction": "input",
         "width": 32,
         "domain": "clk",
-        "description": "32-bit input data bus for write transactions"
-      },
-      {
-        "name": "read_bus_top",
-        "direction": "output",
-        "width": 32,
-        "domain": "clk",
-        "description": "32-bit multiplexed read data bus from active slave"
-      },
-      {
-        "name": "penable_top",
-        "direction": "output",
-        "width": 1,
-        "domain": "clk",
-        "description": "APB strobe indicating ACCESS phase"
-      },
-      {
-        "name": "psel1_top",
-        "direction": "output",
-        "width": 1,
-        "domain": "clk",
-        "description": "Slave 1 chip-select (Address range: 0x000-0x0FF)"
-      },
-      {
-        "name": "psel2_top",
-        "direction": "output",
-        "width": 1,
-        "domain": "clk",
-        "description": "Slave 2 chip-select (Address range: 0x100-0x200)"
+        "description": "32-bit system bus write data [31:0]"
       }
     ],
     "simulation": {
@@ -1704,7 +1658,7 @@ export const fallbackProjects: RTLProject[] = [
           {
             "id": "sig_rst",
             "name": "rst",
-            "type": "binary",
+            "type": "wire",
             "width": 1,
             "radix": "bin",
             "domain": "mac_tb",

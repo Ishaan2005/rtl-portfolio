@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FileCode,
   CheckCircle2,
@@ -16,8 +16,13 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ project, activeFile, onSelectFile }) => {
-  const [showPorts, setShowPorts] = useState(true);
+  const [showPorts, setShowPorts] = useState(false);
   const [showFiles, setShowFiles] = useState(true);
+
+  // Ports section is collapsed by default whenever a project is opened
+  useEffect(() => {
+    setShowPorts(false);
+  }, [project.id]);
 
   const sourceFiles = project.files.filter((f) => f.type === 'source');
   const tbFiles = project.files.filter((f) => f.type === 'testbench');
@@ -88,39 +93,76 @@ export const Sidebar: React.FC<SidebarProps> = ({ project, activeFile, onSelectF
       {/* Module Ports Inspector */}
       <div className="sidebar-section">
         <div
-          className="sidebar-section-header"
-          style={{ cursor: 'pointer' }}
+          className="sidebar-section-header ports-section-header"
+          role="button"
+          tabIndex={0}
+          aria-expanded={showPorts}
+          aria-controls="ports-inspector-content"
+          style={{ cursor: 'pointer', userSelect: 'none' }}
           onClick={() => setShowPorts(!showPorts)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setShowPorts(!showPorts);
+            }
+          }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            {showPorts ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-            <span style={{ color: '#000000', fontWeight: 800 }}>I/O Interface ({project.ports?.length || 0} ports)</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+              {showPorts ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            </span>
+            <span style={{ color: '#000000', fontWeight: 800 }}>
+              PORTS ({project.ports?.length || 0})
+            </span>
           </div>
           <span style={{ fontSize: '11px', color: '#15803d', fontWeight: 800 }}>Verified</span>
         </div>
 
-        {showPorts && (
-          <div className="ports-inspector">
-            {project.ports?.map((port) => (
-              <div key={port.name} className="port-item" title={port.description}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span className={port.direction === 'input' ? 'port-direction-in' : 'port-direction-out'}>
-                    {port.direction === 'input' ? 'IN' : 'OUT'}
-                  </span>
-                  <span className="port-name">{port.name}</span>
+        <div
+          id="ports-inspector-content"
+          className={`ports-section-content ${showPorts ? 'expanded' : 'collapsed'}`}
+          aria-hidden={!showPorts}
+        >
+          <div className="ports-section-inner">
+            <div className="ports-inspector">
+              {project.ports && project.ports.length > 0 ? (
+                project.ports.map((port) => (
+                  <div key={port.name} className="port-item" title={port.description || port.name}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flexShrink: 1 }}>
+                      <span className={port.direction === 'input' ? 'port-direction-in' : 'port-direction-out'}>
+                        {port.direction === 'input' ? 'IN' : 'OUT'}
+                      </span>
+                      <span
+                        className="port-name"
+                        style={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {port.name}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                      {port.width > 1 && (
+                        <span className="port-meta">[{port.width - 1}:0]</span>
+                      )}
+                      {port.domain && (
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>
+                          {port.domain}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ padding: '8px', fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center' }}>
+                  No ports declared
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  {port.width > 1 && (
-                    <span className="port-meta">[{port.width - 1}:0]</span>
-                  )}
-                  {port.domain && (
-                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>{port.domain}</span>
-                  )}
-                </div>
-              </div>
-            ))}
+              )}
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Mini Help Section in Empty Space */}

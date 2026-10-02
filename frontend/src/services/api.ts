@@ -4,6 +4,69 @@ const API_BASE =
   import.meta.env.VITE_API_BASE || '/api';
 
 export function normalizeProjectForFrontend(project: RTLProject): RTLProject {
+  if (project.id === 'amba_apb3') {
+    const apbPorts: RTLPort[] = [
+      {
+        name: 'pclk',
+        direction: 'input',
+        width: 1,
+        domain: 'clk',
+        description: 'APB system bus clock',
+      },
+      {
+        name: 'presetn',
+        direction: 'input',
+        width: 1,
+        domain: 'clk',
+        description: 'Active-low asynchronous system reset',
+      },
+      {
+        name: 'ptransfer',
+        direction: 'input',
+        width: 1,
+        domain: 'clk',
+        description: 'Initiate APB transfer command',
+      },
+      {
+        name: 'pwrite_bus',
+        direction: 'input',
+        width: 1,
+        domain: 'clk',
+        description: 'System bus write control (1 = Write, 0 = Read)',
+      },
+      {
+        name: 'paddr_bus',
+        direction: 'input',
+        width: 32,
+        domain: 'clk',
+        description: '32-bit system bus address [31:0]',
+      },
+      {
+        name: 'pwdata_bus',
+        direction: 'input',
+        width: 32,
+        domain: 'clk',
+        description: '32-bit system bus write data [31:0]',
+      },
+    ];
+
+    const filteredFiles: RTLFile[] = (project.files || []).filter(
+      (f) =>
+        f.name === 'apb_top.v' ||
+        f.name === 'apb_tb.v' ||
+        f.id === 'apb_top.v' ||
+        f.id === 'apb_tb.v'
+    );
+
+    return {
+      ...project,
+      topModule: 'apb_top',
+      activeFileId: filteredFiles[0]?.id || 'apb_top.v',
+      ports: apbPorts,
+      files: filteredFiles,
+    };
+  }
+
   if (project.id === 'mac_unit') {
     const macPorts: RTLPort[] = [
       {
@@ -77,12 +140,13 @@ export function normalizeProjectForFrontend(project: RTLProject): RTLProject {
           description,
           content,
         };
-      });
+      })
+      .filter((f) => f.name === 'mac_top.v' || f.name === 'mac_tb.v');
 
     return {
       ...project,
       topModule: 'mac_top',
-      activeFileId: 'mac_top.v',
+      activeFileId: transformedFiles[0]?.id || 'mac_top.v',
       ports: macPorts,
       files: transformedFiles,
       diagram: project.diagram
