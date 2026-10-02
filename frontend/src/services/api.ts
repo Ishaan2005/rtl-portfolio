@@ -1,7 +1,43 @@
 import { RTLProject, RTLFile, RTLPort, SimulationResult, NetlistDiagramResult } from '../types/rtl';
 
-const API_BASE =
-  import.meta.env.VITE_API_BASE || '/api';
+function getApiBaseUrl(): string {
+  const envBase = (import.meta.env.VITE_API_BASE || '').trim();
+  if (!envBase) {
+    return '/api';
+  }
+  const trimmed = envBase.replace(/\/+$/, '');
+  if (!trimmed.endsWith('/api')) {
+    return `${trimmed}/api`;
+  }
+  return trimmed;
+}
+
+export const API_BASE = getApiBaseUrl();
+
+export class ApiError extends Error {
+  status?: number;
+  yosys?: {
+    exitCode?: number;
+    stdout?: string;
+    stderr?: string;
+  };
+  isNetworkError?: boolean;
+
+  constructor(
+    message: string,
+    options?: {
+      status?: number;
+      yosys?: { exitCode?: number; stdout?: string; stderr?: string };
+      isNetworkError?: boolean;
+    }
+  ) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = options?.status;
+    this.yosys = options?.yosys;
+    this.isNetworkError = options?.isNetworkError;
+  }
+}
 
 export function normalizeProjectForFrontend(project: RTLProject): RTLProject {
   if (project.id === 'amba_apb3') {

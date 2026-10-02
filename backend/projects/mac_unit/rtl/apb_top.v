@@ -53,7 +53,7 @@ generate
 endgenerate
 endmodule
 
-module apb_top #(parameter k = 3)(input clk,rst,input[k-1:0]in1,in2,output reg[2*k:0]accumulator);
+module mac_top #(parameter k = 3)(input clk,rst,input[k-1:0]in1,in2,output reg[2*k:0]accumulator);
 wire[2*k-1:0]int_mult;
 wire[2*k+1:0]next_acc;
 wire[2*k:0]add_sum;
