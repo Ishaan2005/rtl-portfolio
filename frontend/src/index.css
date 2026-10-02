@@ -370,7 +370,9 @@ body {
 .ports-inspector {
   padding: 8px 10px;
   overflow-y: auto;
-  flex: 1;
+  max-height: 220px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-mid) var(--bg-sidebar);
 }
 
 .port-item {

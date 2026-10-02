@@ -65,9 +65,17 @@ export const App: React.FC = () => {
         setSimulationStage(stage as SimulationStage);
       });
       
+      const formattedSimResult = activeProject.id === 'mac_unit' ? {
+        ...simResult,
+        logs: (simResult.logs || []).map((l) => ({
+          ...l,
+          message: l.message.replace(/\bapb_top\b/g, 'mac_top').replace(/\bapb_tb\b/g, 'mac_tb'),
+        })),
+      } : simResult;
+      
       // Update active project with real VCD waveform and real simulation logs
       setProjects((prev) =>
-        prev.map((p) => (p.id === activeProject.id ? { ...p, simulation: simResult } : p))
+        prev.map((p) => (p.id === activeProject.id ? { ...p, simulation: formattedSimResult } : p))
       );
       setHasSimRun(true);
       setSimulationStage('completed');

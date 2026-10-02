@@ -16,8 +16,8 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ project, activeFile, onSelectFile }) => {
-  const [showPorts, setShowPorts] = useState(false);
-  const [showFiles, setShowFiles] = useState(false);
+  const [showPorts, setShowPorts] = useState(true);
+  const [showFiles, setShowFiles] = useState(true);
 
   const sourceFiles = project.files.filter((f) => f.type === 'source');
   const tbFiles = project.files.filter((f) => f.type === 'testbench');
@@ -94,14 +94,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ project, activeFile, onSelectF
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             {showPorts ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-            <span style={{ color: '#000000', fontWeight: 800 }}>I/O Interface ({project.ports.length} ports)</span>
+            <span style={{ color: '#000000', fontWeight: 800 }}>I/O Interface ({project.ports?.length || 0} ports)</span>
           </div>
           <span style={{ fontSize: '11px', color: '#15803d', fontWeight: 800 }}>Verified</span>
         </div>
 
         {showPorts && (
           <div className="ports-inspector">
-            {project.ports.map((port) => (
+            {project.ports?.map((port) => (
               <div key={port.name} className="port-item" title={port.description}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span className={port.direction === 'input' ? 'port-direction-in' : 'port-direction-out'}>

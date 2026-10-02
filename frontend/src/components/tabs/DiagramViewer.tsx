@@ -19,9 +19,9 @@ interface DiagramViewerProps {
   topModule: string;
 }
 
-const cleanDiagramSvg = (svg: string): string => {
+const cleanDiagramSvg = (svg: string, topModule?: string): string => {
   if (!svg) return '';
-  return svg
+  let result = svg
     // Clean up $paramod names into clean readable module names:
     // e.g. $paramod$96ebe223...\\fifomem -> fifomem
     // e.g. $paramod\\rptr_empty\\ADDRSIZE=s32'000... -> rptr_empty
@@ -31,6 +31,11 @@ const cleanDiagramSvg = (svg: string): string => {
     .replace(/<tspan[^>]*>\s*(?:s?\d+'[bhdBHD][0-9a-fA-F_xXzZ]+|[01]{8,}|0x0+)\s*<\/tspan>/gi, '')
     // Remove cell_0000000... constant node labels
     .replace(/<text[^>]*class="[^"]*cell_[01]{8,}[^"]*"[^>]*>[\s\S]*?<\/text>/gi, '');
+
+  if (topModule === 'mac_top') {
+    result = result.replace(/\bapb_top\b/g, 'mac_top');
+  }
+  return result;
 };
 
 export const DiagramViewer: React.FC<DiagramViewerProps> = ({ projectId, topModule }) => {
@@ -127,7 +132,7 @@ export const DiagramViewer: React.FC<DiagramViewerProps> = ({ projectId, topModu
   // Export SVG handler
   const handleExportSvg = () => {
     if (!diagramData?.svg) return;
-    const cleaned = cleanDiagramSvg(diagramData.svg);
+    const cleaned = cleanDiagramSvg(diagramData.svg, topModule);
     const blob = new Blob([cleaned], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -254,7 +259,7 @@ export const DiagramViewer: React.FC<DiagramViewerProps> = ({ projectId, topModu
             display: 'inline-block',
             padding: '24px',
           }}
-          dangerouslySetInnerHTML={{ __html: cleanDiagramSvg(diagramData.svg) }}
+          dangerouslySetInnerHTML={{ __html: cleanDiagramSvg(diagramData.svg, topModule) }}
         />
 
         {/* Floating Zoom Indicator */}

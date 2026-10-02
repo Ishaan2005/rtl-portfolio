@@ -1,72 +1,73 @@
-`timescale 1ns / 1ps
-// ============================================================================
-// Module Name: apb_top
-// Description: Complete Top-Level AMBA APB5 Interconnect with 1 Master & 2 Slaves
-// Project: AMBA APB5 Protocol Design and Verification
-// Author: Ishaan Bhimajiyani
-// ============================================================================
+//multiplier
+module multiplier #(parameter k = 3)(input[k-1:0]in1,in2,output[2*k-1:0]out);
+wire [k-1:0]y[k-1:0]; // initial unshifted 3 bit products. 3 vectors each 3 bits wide.
+wire [2*k-1:0]z[k-1:0]; //products after shiting or apending with zeroes, 3 vecctors each 6 bits wide.
+genvar i,j;
+generate
+        for(i = 0;i < k; i= i+1)begin:for_one
+                for(j = 0; j < k; j = j+1)begin:for_two
+                        and(y[i][j],in2[j],in1[i]); //multiplies 2 3 bit numbers
+            //y[0][0] y[0][1] y[0][2]
+            //y[1][0] y[1][1] y[1][2]
+            //y[2][0] y[2][1] y[2][3] 3 vectors, 3 bit wide each
+                end
+        assign z[i] = {{(k){1'b0}}, y[i]} << i; // then store the appended 6 bit numbers in z
+        end
 
-module apb_top (
-    input  wire        clk,
-    input  wire        reset,
-    input  wire        pwrite_top,
-    input  wire        ptransfer_top,
-    input  wire [31:0] paddr_top,
-    input  wire [31:0] write_bus_top,
-    output wire [31:0] read_bus_top,
-    output wire        penable_top,
-    output wire        psel1_top,
-    output wire        psel2_top
-);
+        if(k == 1) //for single bit multiplication, only y[0][0] will be present
+                assign out = y[0][0];
+        else begin
+                wire[2*k-1:0]int_sum;
+                wire [k-2:0]inter_carry;
+                ripple_adder #(.k(2*k))r1(.A(z[0]),.B(z[1]),.Cin(1'b0),.carry(inter_carry[0]),.sum(int_sum));
+                ripple_adder #(.k(2*k))r2(.A(z[2]),.B(int_sum),.Cin(1'b0),.carry(inter_carry[1]),.sum(out));
+        end
+endgenerate
+endmodule
 
-    wire psel1_master, psel2_master, penable_master;
-    wire [31:0] prdata1, prdata2;
-    wire pready_top = 1'b1;
-    wire [31:0] prdata_master, pwdata_master;
 
-    assign psel1_top   = psel1_master;
-    assign psel2_top   = psel2_master;
-    assign penable_top = penable_master;
 
-    assign read_bus_top = psel1_master ? prdata1 : psel2_master ? prdata2 : 32'b0;
+module ripple_adder #(parameter k = 6)(input [k-1:0]A,B,input Cin,output[k-1:0]sum,output carry);
+wire[k-1:0]G,P;
+wire[k:0]C;
+assign C[0] = Cin;
+/*
+assign C[0] = Cin, G[0] = A[0] & B[0], P[0] = A[0] ^ B[0], C[1] = G[0] | P[0] & C[0];
+assign G[1] = A[1] & B[1], P[1] = A[1] ^ B[1], C[2] = G[1] | (P[1] & G[0]) | (P[1] & P[0] & C[0]);
+assign G[2] = A[2] & B[2], P[2] = A[2] ^ B[2], C[3] = G[2] | P[2] & (G[1] | (P[1] & G[0]) | (P[1] & P[0] & C[0]));
+assign G[3] = A[3] & B[3], P[3] = A[3] ^ B[3], C[4] = G[3] | P[3] & (G[2] | P[2] & (G[1] | (P[1] & G[0]) | (P[1] & P[0] & C[0])));
+assign S[0] = P[0]^C[0], S[1] = P[1]^C[1], S[2] = P[2]^C[2], S[3] = P[3]^C[3];
+assign sum = {S[3],S[2],S[1],S[0]};
+assign carry = {C[0],C[1],C[2],C[3],C[4]};
+*/
+genvar i;
+generate
+    for(i = 0; i < k; i = i + 1)begin:for_loop
+       assign P[i] = A[i] ^ B[i];
+       assign G[i] = A[i] & B[i];
+       assign C[i+1] = G[i] | ( P[i] & C[i] );
+       assign sum[i] = P[i] ^ C[i];
+    end
 
-    master m1 (
-        .clk            (clk),
-        .reset          (reset),
-        .pwrite         (pwrite_top),
-        .ptransfer      (ptransfer_top),
-        .paddr          (paddr_top),
-        .read_data_bus  (read_bus_top),
-        .write_data_bus (write_bus_top),
-        .penable        (penable_master),
-        .psel1          (psel1_master),
-        .psel2          (psel2_master),
-        .pwdata         (pwdata_master),
-        .prdata         (prdata_master)
-    );
+         assign carry = C[k];
+endgenerate
+endmodule
 
-    slave_one slo (
-        .clk     (clk),
-        .reset   (reset),
-        .psel1   (psel1_master),
-        .penable (penable_master),
-        .pwrite  (pwrite_top),
-        .pwdata  (pwdata_master),
-        .paddr   (paddr_top),
-        .pready  (pready_top),
-        .prdata  (prdata1)
-    );
+module apb_top #(parameter k = 3)(input clk,rst,input[k-1:0]in1,in2,output reg[2*k:0]accumulator);
+wire[2*k-1:0]int_mult;
+wire[2*k+1:0]next_acc;
+wire[2*k:0]add_sum;
+wire add_cout;
+multiplier #(.k(k)) m1(.in1(in1),.in2(in2),.out(int_mult));
 
-    slave_two slt (
-        .clk     (clk),
-        .reset   (reset),
-        .psel2   (psel2_master),
-        .penable (penable_master),
-        .pwrite  (pwrite_top),
-        .pwdata  (pwdata_master),
-        .paddr   (paddr_top),
-        .pready  (pready_top),
-        .prdata  (prdata2)
-    );
+ripple_adder #(.k(2*k+1)) a1(.A(accumulator[2*k:0]),.B({1'b0,int_mult}),.Cin(1'b0),.sum(add_sum),.carry(add_cout));
 
+assign next_acc = {add_cout,add_sum};
+
+always @(posedge clk or posedge rst) begin
+        if (rst)
+                accumulator <= 0;
+   else
+        accumulator <= next_acc;
+end
 endmodule
